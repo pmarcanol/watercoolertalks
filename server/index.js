@@ -3,29 +3,66 @@ const AccessToken = require("twilio").jwt.AccessToken;
 const VideoGrant = AccessToken.VideoGrant;
 const express = require("express");
 const env = require("dotenv");
-const bodyParser = require('body-parser')
-
+const bodyParser = require("body-parser");
+const { auth } = require("./utils/auth");
+const User = require("./Users/users.model");
+const mongoose = require("mongoose");
 env.config();
+
+mongoose.connect(`mongodb://${process.env.MONGO_URL}/${process.env.MONGO_DB}`, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+mongoose.set("debug", true);
+const Users = mongoose.model('Users');
+
+require("./Users/users.model");
+require("./utils/passport");
 
 const MAX_SESSION_TIME = 3600;
 
 const app = express();
-app.use(cors())
+app.use(cors());
 app.use("/", express.static("../client/build"));
-app.use( bodyParser.json() );      
-app.use(bodyParser.urlencoded({    
-  extended: true
-})); 
+app.use(bodyParser.json());
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 
-app.listen(3000, () => {
+app.listen(3000, async () => {
+  console.log("app Listening on 3000");
 });
 
+app.post("/signup", auth.optional, async (req, res) => {
+  const { email, password } = req.body;
+
+  const userExists =  await Users.findOne({email});
+  console.log(userExists);
+  if (userExists) {
+    res.statusCode = 400;
+    res.statusMessage = 'An user with that email already exists';
+    res.send()
+  }
+  const user = new Users({ email });
+  user.setPassword(password);
+
+  try {
+    await user.save();
+    res.json({ user: user.toAuthJSON() });
+  } catch (e) {
+    res.statusCode = 500;
+    res.statusMessage = e;
+    res.send();
+  }
+});
 // Step 1: generate access token from the user name, and validate
 // against twilio servers. Return to the user
 app.post("/login", (req, res) => {
-  const {username, room} = req.body;
+  const { username, room } = req.body;
 
-  console.log(req.body)
+  console.log(req.body);
   if (!username) {
     res.statusCode = 400;
     res.statusMessage = "No name was provided";
