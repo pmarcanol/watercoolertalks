@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const { auth } = require("./utils/auth");
 const User = require("./Users/users.model");
 const mongoose = require("mongoose");
+const passport = require('passport');
+
 env.config();
 
 mongoose.connect(`mongodb://${process.env.MONGO_URL}/${process.env.MONGO_DB}`, {
@@ -37,7 +39,6 @@ app.listen(3000, async () => {
 
 app.post("/signup", auth.optional, async (req, res) => {
   const { email, password } = req.body;
-
   const userExists =  await Users.findOne({email});
   console.log(userExists);
   if (userExists) {
@@ -59,29 +60,43 @@ app.post("/signup", auth.optional, async (req, res) => {
 });
 // Step 1: generate access token from the user name, and validate
 // against twilio servers. Return to the user
-app.post("/login", (req, res) => {
-  const { username, room } = req.body;
+app.post("/login",auth.optional, (req, res, next) => {
+  const { email, password } = req.body;
 
-  console.log(req.body);
-  if (!username) {
+  // console.log(req.body);
+  if (!email|| !password) {
     res.statusCode = 400;
-    res.statusMessage = "No name was provided";
+    res.statusMessage = "Email and password are required";
     res.send();
     return;
   }
-  const accessToken = new AccessToken(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_API_KEY,
-    process.env.TWILIO_API_SECRET,
-    // Token additional settings, such as ttl and room
-    { ttl: MAX_SESSION_TIME, name: room }
-  );
 
-  accessToken.identity = username;
-  const grant = new VideoGrant();
-  accessToken.addGrant(grant);
+  return passport.authenticate('local', {session: false}, (err, user, info) => {
+    if (err) {
+      res.send(err)
+    }
 
-  res.json({
-    token: accessToken.toJwt(),
-  });
+    console.log('USER', info);
+    user.token =  user.generateJWT();
+    res.json({user: user.toAuthJSON()})
+  })(req, res, next)
+  // const accessToken = new AccessToken(
+  //   process.env.TWILIO_ACCOUNT_SID,
+  //   process.env.TWILIO_API_KEY,
+  //   process.env.TWILIO_API_SECRET,
+  //   // Token additional settings, such as ttl and room
+  //   { ttl: MAX_SESSION_TIME, name: room }
+  // );
+
+  // accessToken.identity = username;
+  // const grant = new VideoGrant();
+  // accessToken.addGrant(grant);
+
+  // res.json({
+  //   token: accessToken.toJwt(),
+  // });
 });
+
+app.get('/user', auth.required, async (req, res, next) => {
+  return res.json(await Users.find({}));
+})
