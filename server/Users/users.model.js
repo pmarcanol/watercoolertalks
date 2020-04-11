@@ -41,4 +41,4 @@ UsersSchema.methods.toAuthJSON = function() {
 };
 
 
-mongoose.model('Users', UsersSchema);
+mongoose.model('user', UsersSchema);
