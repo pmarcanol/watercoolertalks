@@ -5,7 +5,6 @@ const signup = async (req, res) => {
   const Users = mongoose.model("user");
   const { email, password } = req.body;
   const userExists = await Users.findOne({ email });
-  console.log(userExists);
   if (userExists) {
     res.statusCode = 400;
     res.statusMessage = "An user with that email already exists";

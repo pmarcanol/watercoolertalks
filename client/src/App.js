@@ -4,26 +4,35 @@ import logo from "./logo.svg";
 import "./reset.css";
 
 function App() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-
   function onButtonClick() {
-    fetch('/signup', {
+    fetch("http://localhost:3000/auth/signup", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username,
-        password
-      })
-    }).then(console.log)
+        email,
+        password,
+      }),
+    }).then(console.log);
   }
   return (
     <Login>
-      <label for="username">Username</label>
-      <input id="username"></input>
-      <label for="password">Password</label>
-      <input id="password"></input>
-      <button type="button" onClick={onButtonClick}>Enter</button>
+      <label htmlFor="email">Email</label>
+      <input
+        id="username"
+        onChange={(e) => setEmail(e.currentTarget.value)}
+      ></input>
+      <label htmlFor="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        onChange={(e) => setPassword(e.currentTarget.value)}
+      ></input>
+      <button type="button" onClick={onButtonClick}>
+        Signup
+      </button>
     </Login>
   );
 }
