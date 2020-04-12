@@ -4,9 +4,14 @@ const VideoGrant = AccessToken.VideoGrant;
 const express = require("express");
 const env = require("dotenv");
 const {json, urlencoded} = require("body-parser");
-const { auth, signup, login } = require("./utils/auth");
-const User = require("./Users/users.model");
+const { auth, signup, login } = require("./utils/authUtils");
 const mongoose = require("mongoose");
+const roomsRouter = require('./Rooms/rooms.router');
+const usersRouter = require('./Users/users.router');
+const authRouter = require('./Auth/auth.router');
+
+require('./Users/users.model')
+require('./Rooms/rooms.model')
 
 env.config();
 const app = express();
@@ -20,18 +25,9 @@ app.use(
   })
 );
 
-
-
-
-const appRouter =  express.Router();
-
-
-app.use('/auth', auth.optional);
-app.use('/auth/signup', signup);
-app.use('/auth/login', login);
-
-
-const MAX_SESSION_TIME = 3600;
+app.use('/auth', authRouter);
+app.use('/api/room', roomsRouter);
+app.use('/api/user', usersRouter);
 
 async function init() {  
   try {
@@ -39,10 +35,12 @@ async function init() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
+
     mongoose.set("debug", true);
     app.listen(3000, async () => {
       console.log("app Listening on 3000");
     });
+
   } catch (e) {
     console.log(e);
     init();
@@ -51,9 +49,6 @@ async function init() {
   // appRouter.get('/user', auth.required, async (req, res, next) => {
   //   return res.json(await Users.find({}));
   // })
-  
-  
-  // app.use('/api', auth.required, appRouter)
 
 }
 
