@@ -1,28 +1,27 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+
+import {useAuth, useFetch} from "./hooks";
 import logo from "./logo.svg";
 import "./reset.css";
 
 function App() {
-  const [email, setEmail] = useState("");
+  const [username, setusername] = useState("");
   const [password, setPassword] = useState("");
-
-  function onButtonClick() {
-    fetch("http://localhost:3000/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    }).then(console.log);
+  const {signIn} = useAuth()
+  const {GET} = useFetch()
+  async function onButtonClick() {
+    const a = await signIn('pablo1012@outlook.com', 'yourpassword')
+    console.log(a);
+    const b = await GET(`user/${a._id}/rooms`);
+    console.log(b)
   }
   return (
     <Login>
-      <label htmlFor="email">Email</label>
+      <label htmlFor="username">username</label>
       <input
         id="username"
-        onChange={(e) => setEmail(e.currentTarget.value)}
+        onChange={(e) => setusername(e.currentTarget.value)}
       ></input>
       <label htmlFor="password">Password</label>
       <input
@@ -36,6 +35,8 @@ function App() {
     </Login>
   );
 }
+
+
 
 const Login = styled.div`
   background: white;

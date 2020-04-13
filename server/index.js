@@ -1,11 +1,11 @@
 const cors = require("cors");
 const AccessToken = require("twilio").jwt.AccessToken;
-const VideoGrant = AccessToken.VideoGrant;
 const express = require("express");
 const env = require("dotenv");
 const {json, urlencoded} = require("body-parser");
-const { auth, signup, login } = require("./utils/authUtils");
+const { auth } = require("./utils/authUtils");
 const mongoose = require("mongoose");
+
 const roomsRouter = require('./Rooms/rooms.router');
 const usersRouter = require('./Users/users.router');
 const authRouter = require('./Auth/auth.router');
@@ -26,6 +26,8 @@ app.use(
 );
 
 app.use('/auth', authRouter);
+
+app.use('/api', auth.required)
 app.use('/api/room', roomsRouter);
 app.use('/api/user', usersRouter);
 

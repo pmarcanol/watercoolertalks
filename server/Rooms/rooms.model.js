@@ -37,7 +37,7 @@ RoomsSchema.methods.validatePassword = function(password) {
 //   expirationDate.setDate(today.getDate() + 60);
 
 //   return jwt.sign({
-//     email: this.email,
+//     username: this.username,
 //     id: this._id,
 //     exp: parseInt(expirationDate.getTime() / 1000, 10),
 //   }, 'secret');
