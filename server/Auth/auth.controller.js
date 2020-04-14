@@ -17,6 +17,7 @@ const signup = async (req, res) => {
     await user.save();
     res.json({ user: user.toAuthJSON() });
   } catch (e) {
+    console.log(e)
     res.statusCode = 500;
     res.statusMessage = e;
     res.send();
@@ -40,7 +41,8 @@ const login = (req, res, next) => {
       if (err) {
         res.send(err);
       }
-      user.token = user.generateJWT();
+      console.log(info)
+      // user.token = user.generateJWT();
       res.json({
         data: {
           user: user.toAuthJSON(),

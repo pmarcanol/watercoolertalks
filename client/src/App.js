@@ -1,24 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, createContext, useContext } from "react";
 import styled from "styled-components";
 
-import {useAuth, useFetch} from "./hooks";
-import logo from "./logo.svg";
+import { useAuth } from "./api";
 import "./reset.css";
 
+const ScreenTypes = {
+  LOGIN: "LOGIN",
+  SIGNUP: "SIGNUP",
+};
 function App() {
+  const [currentUser, setCurrentUser] = useState({
+    isLoggedIn: false,
+    username: "John Doe",
+  });
   const [username, setusername] = useState("");
   const [password, setPassword] = useState("");
-  const {signIn} = useAuth()
-  const {GET} = useFetch()
-  async function onButtonClick() {
-    const a = await signIn('pablo1012@outlook.com', 'yourpassword')
-    console.log(a);
-    const b = await GET(`user/${a._id}/rooms`);
-    console.log(b)
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [type, setType] = useState(ScreenTypes.LOGIN);
+  const { register, signIn } = useAuth();
+  async function onRegister() {
+    try {
+      const user = await register(username, password);
+      if (user && user._id) {
+        setCurrentUser({
+          isLoggedIn: true,
+          ...user,
+        });
+      }
+    } catch {
+      console.log("could not register");
+    }
   }
-  return (
+
+  async function onLogin() {
+    try {
+      const user = await signIn(username, password);
+      if (user && user._id) {
+        setCurrentUser({
+          isLoggedIn: true,
+          ...user,
+        });
+      }
+    } catch {
+      console.log("could not log in");
+    }
+  }
+  return currentUser.isLoggedIn ? (
+    <div>Hello {currentUser.username}!</div>
+  ) : (
     <Login>
-      <label htmlFor="username">username</label>
+      <label htmlFor="username">Username</label>
       <input
         id="username"
         onChange={(e) => setusername(e.currentTarget.value)}
@@ -29,14 +60,37 @@ function App() {
         type="password"
         onChange={(e) => setPassword(e.currentTarget.value)}
       ></input>
-      <button type="button" onClick={onButtonClick}>
-        Signup
-      </button>
+      {type == ScreenTypes.SIGNUP ? (
+        <>
+          <label htmlFor="passwordConfirm">Confirm Password</label>
+          <input
+            id="passwordConfirm"
+            type="password"
+            onChange={(e) => setPasswordConfirm(e.currentTarget.value)}
+          ></input>
+          <button type="button" onClick={onRegister}>
+            Register
+          </button>
+        </>
+      ) : (
+        <button type="button" onClick={onLogin}>
+          Log In
+        </button>
+      )}
+      Or would you prefer to
+      <a
+        onClick={() => {
+          type == ScreenTypes.LOGIN
+            ? setType(ScreenTypes.SIGNUP)
+            : setType(ScreenTypes.LOGIN);
+        }}
+      >
+        {type == ScreenTypes.SIGNUP ? "Register" : "Log In"} instead
+      </a>
+      ?
     </Login>
   );
 }
-
-
 
 const Login = styled.div`
   background: white;
