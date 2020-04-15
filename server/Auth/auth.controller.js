@@ -6,21 +6,17 @@ const signup = async (req, res) => {
   const { username, password } = req.body;
   const userExists = await Users.findOne({ username });
   if (userExists) {
-    res.statusCode = 400;
-    res.statusMessage = "An user with that username already exists";
-    res.send();
+    res.status(400).json({errors: "An user with that username already exists"})
   }
+
   const user = new Users({ username });
   user.setPassword(password);
 
   try {
     await user.save();
-    res.json({ user: user.toAuthJSON() });
+    res.json({ data: { user: user.toAuthJSON() } });
   } catch (e) {
-    console.log(e)
-    res.statusCode = 500;
-    res.statusMessage = e;
-    res.send();
+    res.status(500).json({errors: e})
   }
 };
 
@@ -28,9 +24,7 @@ const login = (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    res.statusCode = 400;
-    res.statusMessage = "username and password are required";
-    res.send();
+    res.status(400).json({errors: "username and password are required"})
     return;
   }
 
@@ -38,16 +32,23 @@ const login = (req, res, next) => {
     "local",
     { session: false },
     (err, user, info) => {
+      let error;
       if (err) {
-        res.send(err);
+        error = err;
       }
-      console.log(info)
-      // user.token = user.generateJWT();
-      res.json({
-        data: {
-          user: user.toAuthJSON(),
-        },
-      });
+      if (info && info.errors) {
+        error = info.errors;
+      }
+
+      if (error) {
+        res.status(400).send(error).end();
+      } else {
+        res.json({
+          data: {
+            user: user.toAuthJSON(),
+          },
+        });
+      }
     }
   )(req, res, next);
 };

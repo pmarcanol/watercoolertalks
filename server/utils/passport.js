@@ -11,7 +11,7 @@ passport.use(new LocalStrategy({
   Users.findOne({ username })
     .then((user) => {
       if(!user || !user.validatePassword(password)) {
-        return done(null, false, { errors: { 'username or password': 'is invalid' } });
+        return done(null, false, { errors: ['Could not find a user with those credentials'] });
       }
 
       return done(null, user);

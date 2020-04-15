@@ -5,25 +5,23 @@ function Services() {
     return {
       signIn: async (username, password) => {
         try {
-          const res = await (
+          const res = await parseResponse(
             await POST("auth/login", { username, password }, { auth: false })
-          ).json();
-          console.log(res);
-          token = res.data.user.token;
-          return res.data.user;
+          );
+          return res;
         } catch (e) {
           console.error("could not sign in", e);
         }
       },
       register: async (username, password) => {
         try {
-          const res = await POST(
-            "auth/signup",
-            { username, password },
-            { auth: false }
-          ).json();
-          token = res.data.user.token;
-          console.log(res);
+          const res = await parseResponse(
+            await POST("auth/signup", { username, password }, { auth: false })
+          );
+          if (res.success) {
+            token = res.body.user.token;
+          }
+          return res;
         } catch (e) {
           console.error("could not register");
         }
@@ -83,3 +81,18 @@ const services = new Services();
 
 module.exports.useAuth = services.Auth;
 module.exports.useFetch = services.Fetch;
+
+async function parseResponse(res) {
+  const json = await res.json();
+  if (res.ok) {
+    return {
+      success: true,
+      body: json.data,
+    };
+  } else {
+    return {
+      success: false,
+      errors: json.errors,
+    };
+  }
+}
