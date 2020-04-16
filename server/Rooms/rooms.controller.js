@@ -10,9 +10,17 @@ const defaultQuestions = [
 
 const MAX_SESSION_TIME = 3600;
 async function createRoom(req, res) {
-  const { name, owner, password } = req.body;
-
+  const { name, password } = req.body;
+  const owner = req.payload.id;
   try {
+    const roomExists = await Room.count({ name:  RegExp(`/^${name}$/i`) });
+    console.log(roomExists)
+    if (roomExists) {
+      res.status(400).json({
+        errors: [`Room ${name} already exists`],
+      });
+      return;
+    }
     const newRoom = new Room({ name, owner, questions: defaultQuestions });
     newRoom.setPassword(password);
     await newRoom.save();
@@ -32,7 +40,8 @@ function getRoom(req, res) {
 }
 
 async function joinRoom(req, res) {
-  const { roomName, password, userId } = req.body;
+  const { roomName, password } = req.body;
+  const reqUserId = req.payload.id;
   if (!roomName || !password) {
     res.status(400);
     res.statusMessage = `That combination of Room and Password doesn't exist`;
@@ -40,7 +49,7 @@ async function joinRoom(req, res) {
   }
   try {
     const room = await Room.findOne({ name: roomName });
-    const isOwner = room.owner == req.payload.id;
+    const isOwner = room.owner == reqUserId;
     const passwordIsValid = isOwner || room.validatePassword(password);
     if (passwordIsValid) {
       const accessToken = new AccessToken(
@@ -51,7 +60,7 @@ async function joinRoom(req, res) {
         { ttl: MAX_SESSION_TIME, name: roomName }
       );
 
-      accessToken.identity = userId;
+      accessToken.identity = reqUserId;
       const grant = new VideoGrant();
       accessToken.addGrant(grant);
       res.json({ data: { token: accessToken.toJwt() } });
