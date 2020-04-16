@@ -9,7 +9,7 @@ const ScreenTypes = {
   SIGNUP: "SIGNUP",
 };
 
-export function Login() {
+export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");

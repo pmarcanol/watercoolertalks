@@ -55,9 +55,11 @@ async function joinRoom(req, res) {
       accessToken.addGrant(grant);
       res.json({ data: accessToken.toJwt() });
     } else {
-      res.status(400);
-      res.statusMessage = `That combination of Room and Password doesn't exist`;
-      res.send();
+      res
+        .status(400)
+        .json({
+          errors: [`That combination of Room and Password doesn't exist`],
+        });
     }
   } catch (e) {
     console.log(e);

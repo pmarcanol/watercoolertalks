@@ -5,9 +5,14 @@ function Services() {
     return {
       signIn: async (username, password) => {
         try {
-          const res = await parseResponse(
-            await POST("auth/login", { username, password }, { auth: false })
+          const res = await POST(
+            "auth/login",
+            { username, password },
+            { auth: false }
           );
+          if (res.success) {
+            token = res.body.user.token;
+          }
           return res;
         } catch (e) {
           console.error("could not sign in", e);
@@ -15,8 +20,10 @@ function Services() {
       },
       register: async (username, password) => {
         try {
-          const res = await parseResponse(
-            await POST("auth/signup", { username, password }, { auth: false })
+          const res = await POST(
+            "auth/signup",
+            { username, password },
+            { auth: false }
           );
           if (res.success) {
             token = res.body.user.token;
@@ -30,33 +37,35 @@ function Services() {
   }
   function Fetch() {
     return {
-      GET: (url, params, options = { auth: true }) => {
+      GET: async (url, params, options = { auth: true }) => {
         const headers = {
           "Content-Type": "application/json",
         };
         if (options.auth) {
           headers.Authorization = `Bearer ${token}`;
         }
-        return fetch(
+        const res = await fetch(
           `${process.env.REACT_APP_API_URL}/api/${url}/${queryParams(params)}`,
           {
             method: "GET",
             headers,
           }
         );
+        return await parseResponse(res);
       },
-      POST: (url, body, options = { auth: true }) => {
+      POST: async (url, body, options = { auth: true }) => {
         const headers = {
           "Content-Type": "application/json",
         };
         if (options.auth) {
           headers.Authorization = `Bearer ${token}`;
         }
-        return fetch(`${process.env.REACT_APP_API_URL}/${url}`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/${url}`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
         });
+        return await parseResponse(res);
       },
     };
   }

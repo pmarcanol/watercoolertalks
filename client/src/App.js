@@ -6,7 +6,8 @@ import Client from "./Client";
 
 import "./reset.css";
 
-import { Login } from "./Login";
+import Login from "./Login";
+import Dashboard from "./Dashboard";
 export const AuthContext = createContext({
   currentUser: null,
   setCurrentUser: () => {},
@@ -37,7 +38,9 @@ function AppWithAuth() {
         <>
           <div>Hello {currentUser.username}!</div>
           <Switch>
-            <Route path="/:id" component={Client} />
+            <Route path="/room/:id" component={Client} />
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/" component={Dashboard} />
           </Switch>
         </>
       ) : (
