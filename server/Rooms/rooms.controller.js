@@ -40,7 +40,8 @@ async function joinRoom(req, res) {
   }
   try {
     const room = await Room.findOne({ name: roomName });
-    const passwordIsValid = room.validatePassword(password);
+    const isOwner = room.owner == req.payload.id;
+    const passwordIsValid = isOwner || room.validatePassword(password);
     if (passwordIsValid) {
       const accessToken = new AccessToken(
         process.env.TWILIO_ACCOUNT_SID,
@@ -53,13 +54,11 @@ async function joinRoom(req, res) {
       accessToken.identity = userId;
       const grant = new VideoGrant();
       accessToken.addGrant(grant);
-      res.json({ data: accessToken.toJwt() });
+      res.json({ data: { token: accessToken.toJwt() } });
     } else {
-      res
-        .status(400)
-        .json({
-          errors: [`That combination of Room and Password doesn't exist`],
-        });
+      res.status(400).json({
+        errors: [`That combination of Room and Password doesn't exist`],
+      });
     }
   } catch (e) {
     console.log(e);

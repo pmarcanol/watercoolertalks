@@ -45,7 +45,9 @@ function Services() {
           headers.Authorization = `Bearer ${token}`;
         }
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/${url}/${queryParams(params)}`,
+          `${process.env.REACT_APP_API_URL}/${
+            options.auth ? "api/" : ""
+          }${url}/${queryParams(params)}`,
           {
             method: "GET",
             headers,
@@ -60,11 +62,16 @@ function Services() {
         if (options.auth) {
           headers.Authorization = `Bearer ${token}`;
         }
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/${url}`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(body),
-        });
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/${
+            options.auth ? "api/" : ""
+          }${url}`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body),
+          }
+        );
         return await parseResponse(res);
       },
     };
