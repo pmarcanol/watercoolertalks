@@ -1,23 +1,40 @@
 import React, { useEffect, useContext, useState } from "react";
+import { useHistory } from "react-router-dom";
 
 import { AuthContext } from "./App";
 import { useFetch } from "./api";
 
 export default function Dashboard() {
+  const history = useHistory();
+
   const [rooms, setRooms] = useState([]);
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, setCurrentUser } = useContext(AuthContext);
   const { GET, POST } = useFetch();
   const [showCreateRoom, setShowCreateRoom] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function getUserRooms() {
-      if (currentUser && currentUser._id) {
-        const rooms = await GET(`user/${currentUser._id}/rooms`);
-        setRooms(rooms.body);
+      if (currentUser && currentUser._id && !cancelled) {
+        try {
+          const rooms = await GET(`user/${currentUser._id}/rooms`);
+          setRooms(rooms.body);
+        } catch(e) {
+          if (!cancelled) {
+            console.log('could not cosos');
+          }
+        }
       }
     }
 
-    getUserRooms();
+    if (!cancelled) {
+      getUserRooms();
+    }
+
+    return () => {
+      cancelled = true;
+    }
   }, [currentUser]);
 
   async function JoinRoom(room) {
@@ -25,8 +42,10 @@ export default function Dashboard() {
       roomName: room.name,
       password: "1234",
     });
-    console.log(r);
+    history.push(`room/${room.name}`);
+    setCurrentUser({ ...currentUser, roomToken: r.body.token });
   }
+
   return (
     <div>
       <div>
@@ -67,17 +86,17 @@ function CreateRoom() {
   }
   return (
     <form>
-      <label for="roomName">Room Name</label>
+      <label htmlFor="roomName">Room Name</label>
       <input
         onChange={(e) => setRoomName(e.currentTarget.value)}
         id="roomName"
       ></input>
-      <label for="roomPassword">Room Password</label>
+      <label htmlFor="roomPassword">Room Password</label>
       <input
         onChange={(e) => setRoomPassword(e.currentTarget.value)}
         id="roomPassword"
       ></input>
-      <label for="confirmRoomPassword">Confirm Room Password</label>
+      <label htmlFor="confirmRoomPassword">Confirm Room Password</label>
       <input
         onChange={(e) => setConfirmRoomPassword(e.currentTarget.value)}
         id="confirmRoomPassword"

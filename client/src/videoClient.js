@@ -5,8 +5,29 @@ const TwilioVideo = require("twilio-video");
 function useTwilioVideoRoom(token) {
   const [room, setRoom] = useState();
   const [participants, setParticipants] = useState();
+  const [mics, setMics] = useState([]);
+  const [cams, setCams] = useState([]);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [error, setError] = useState();
   let LocalTracks;
 
+  useEffect(() => {
+    handleTwilioEvents(room);
+    return () => {
+      room.disconnect();
+    };
+  }, [room]);
+
+  useEffect(() => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    let mics = devices.filter(d => d.kind == 'audioinput');
+    let cams = devices.filter(d => d.kind == 'videoinput');
+    
+    setMics(mics);
+    setCams(cams);
+
+  }, []);
+  
   async function join() {
     try {
       const room = await connectVideo(token, { tracks: LocalTracks });
@@ -23,12 +44,6 @@ function useTwilioVideoRoom(token) {
     });
   }
 
-  useEffect(() => {
-    handleTwilioEvents(room);
-    return () => {
-      room.disconnect();
-    };
-  }, [room]);
 
   function connectParticipantToRef(ref, participant) {
     participant.tracks.forEach((pub) => {
@@ -69,13 +84,21 @@ function useTwilioVideoRoom(token) {
       setParticipants(leftParticipants);
     });
   }
+
+  join().then(() => setHasJoined(true)).catch((e)=> setError(e));
+
   return {
+    hasJoined,
     participants,
     room,
     connectParticipantToRef,
     onVideoOptionChange,
     onAudioOptionChange,
-    connectToLocalTracks
+    connectToLocalTracks,
+    devices: {
+      mics,
+      cams
+    }
   };
 }
 
@@ -155,7 +178,6 @@ function useTwilioVideoRoom(token) {
 // }
 
 // async function ChooseMediaToShare() {
-//   const devices = await navigator.mediaDevices.enumerateDevices();
 //   const videoDevices = devices.filter((d) => d.kind === "videoinput");
 //   const audioDevices = devices.filter((d) => d.kind === "audioinput");
 
