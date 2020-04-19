@@ -43,6 +43,7 @@ export default function Dashboard() {
       password: "1234",
     });
     history.push(`room/${room.name}`);
+    console.log(r.body.roomToken)
     setCurrentUser({ ...currentUser, roomToken: r.body.token });
   }
 

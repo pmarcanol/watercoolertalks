@@ -1,8 +1,9 @@
+import React, { useState, useEffect } from "react";
 import { connect as connectVideo, Participant } from "twilio-video";
 
 const TwilioVideo = require("twilio-video");
 
-function useTwilioVideoRoom(token) {
+export function useTwilioVideoRoom() {
   const [room, setRoom] = useState();
   const [participants, setParticipants] = useState();
   const [mics, setMics] = useState([]);
@@ -11,50 +12,61 @@ function useTwilioVideoRoom(token) {
   const [error, setError] = useState();
   let LocalTracks;
 
+
   useEffect(() => {
-    handleTwilioEvents(room);
+    if (room) {
+      setHasJoined(true)
+      handleTwilioEvents(room);
+    }
     return () => {
-      room.disconnect();
+      if (room) {
+        room.disconnect();
+      }
     };
   }, [room]);
 
   useEffect(() => {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    let mics = devices.filter(d => d.kind == 'audioinput');
-    let cams = devices.filter(d => d.kind == 'videoinput');
-    
-    setMics(mics);
-    setCams(cams);
+    async function init() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      let mics = devices.filter((d) => d.kind == "audioinput");
+      let cams = devices.filter((d) => d.kind == "videoinput");
+      setMics(mics);
+      setCams(cams);
+    }
 
+    init();
   }, []);
-  
-  async function join() {
+
+  async function joinTwilioRoom(token) {
     try {
-      const room = await connectVideo(token, { tracks: LocalTracks });
-      setRoom(room);
-      setParticipants(room.participants);
+      if (token) {
+        const room = await connectVideo(`${token}`, { tracks: LocalTracks });
+        setRoom(room);
+        setParticipants(room.participants);
+      }
     } catch (e) {
       console.log(e);
+      setError(e);
     }
   }
 
-  function connectToLocalTracks(room, ref) {
-    room.localParticipant.tracks.forEach((x) => {
-      ref(x.track.attach());
-    });
+  function connectToLocalTracks(ref) {
+    if (room) {
+      room.localParticipant.tracks.forEach((x) => {
+        ref.current.appendChild(x.track.attach());
+      });
+    }
   }
-
 
   function connectParticipantToRef(ref, participant) {
     participant.tracks.forEach((pub) => {
       if (pub.isSubscribed) {
-        ref.appendChild(pub.track.attach());
+        ref.current.appendChild(pub.track.attach());
       }
       participant.on("trackSubscribed", (t) => {
-        ref.appendChild(t.attach());
+        ref.current.appendChild(t.attach());
       });
     });
-    ref.attach();
   }
 
   async function onVideoOptionChange(videoOptionId) {
@@ -73,7 +85,7 @@ function useTwilioVideoRoom(token) {
 
   function handleTwilioEvents(room) {
     room.on("participantConnected", (participant) => {
-      setParticipants([...participants, participarticipant]);
+      setParticipants([...participants, participant]);
     });
 
     room.on("participantDisconected", (participant) => {
@@ -85,8 +97,6 @@ function useTwilioVideoRoom(token) {
     });
   }
 
-  join().then(() => setHasJoined(true)).catch((e)=> setError(e));
-
   return {
     hasJoined,
     participants,
@@ -97,8 +107,9 @@ function useTwilioVideoRoom(token) {
     connectToLocalTracks,
     devices: {
       mics,
-      cams
-    }
+      cams,
+    },
+    joinTwilioRoom
   };
 }
 

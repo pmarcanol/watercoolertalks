@@ -1,0 +1,4 @@
+
+server/security/cert.key
+server/security/cert.pem
+server/security/req.cnf
