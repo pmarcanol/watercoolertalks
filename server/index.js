@@ -5,8 +5,6 @@ const env = require("dotenv");
 const { json, urlencoded } = require("body-parser");
 const { auth } = require("./utils/authUtils");
 const mongoose = require("mongoose");
-const https = require("https");
-const fs = require('fs')
 
 const roomsRouter = require("./Rooms/rooms.router");
 const usersRouter = require("./Users/users.router");
@@ -40,14 +38,10 @@ async function init() {
       useUnifiedTopology: true,
     });
 
-    const httpsOptions = {
-      key: fs.readFileSync("./security/cert.key"),
-      cert: fs.readFileSync("./security/cert.pem"),
-    };
     mongoose.set("debug", true);
-    const server = https.createServer(httpsOptions, app).listen(3000, () => {
-      console.log("server running at " + 300);
-    });
+    app.listen(3000, () => {
+      console.log('ready')
+    })
   } catch (e) {
     console.log(e);
     init();
