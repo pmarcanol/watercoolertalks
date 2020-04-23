@@ -13,8 +13,8 @@ async function createRoom(req, res) {
   const { name, password } = req.body;
   const owner = req.payload.id;
   try {
-    const roomExists = await Room.count({ name:  RegExp(`/^${name}$/i`) });
-    console.log(roomExists)
+    const roomExists = await Room.count({ name: RegExp(`/^${name}$/i`) });
+    console.log(roomExists);
     if (roomExists) {
       res.status(400).json({
         errors: [`Room ${name} already exists`],
@@ -57,11 +57,11 @@ async function joinRoom(req, res) {
         process.env.TWILIO_API_SID,
         process.env.TWILIO_API_SECRET,
         // Token additional settings, such as ttl and room
-        { ttl: MAX_SESSION_TIME, name: roomName }
+        { ttl: MAX_SESSION_TIME }
       );
 
       accessToken.identity = reqUserId;
-      const grant = new VideoGrant();
+      const grant = new VideoGrant({ room: roomName });
       accessToken.addGrant(grant);
       res.json({ data: { token: accessToken.toJwt() } });
     } else {

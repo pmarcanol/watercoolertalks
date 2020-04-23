@@ -5,17 +5,16 @@ const TwilioVideo = require("twilio-video");
 
 export function useTwilioVideoRoom() {
   const [room, setRoom] = useState();
-  const [participants, setParticipants] = useState();
+  const [participants, setParticipants] = useState([]);
   const [mics, setMics] = useState([]);
   const [cams, setCams] = useState([]);
   const [hasJoined, setHasJoined] = useState(false);
   const [error, setError] = useState();
   let LocalTracks;
 
-
   useEffect(() => {
     if (room) {
-      setHasJoined(true)
+      setHasJoined(true);
       handleTwilioEvents(room);
     }
     return () => {
@@ -35,6 +34,11 @@ export function useTwilioVideoRoom() {
     }
 
     init();
+    return () => {
+      if (room) {
+        room.disconnect();
+      }
+    };
   }, []);
 
   async function joinTwilioRoom(token) {
@@ -58,14 +62,15 @@ export function useTwilioVideoRoom() {
     }
   }
 
-  function connectParticipantToRef(ref, participant) {
+  function connectParticipantToTracks(ref, participant) {
+    debugger;
     participant.tracks.forEach((pub) => {
       if (pub.isSubscribed) {
         ref.current.appendChild(pub.track.attach());
       }
-      participant.on("trackSubscribed", (t) => {
-        ref.current.appendChild(t.attach());
-      });
+    });
+    participant.on("trackSubscribed", (t) => {
+      ref.current.appendChild(t.attach());
     });
   }
 
@@ -86,6 +91,7 @@ export function useTwilioVideoRoom() {
   function handleTwilioEvents(room) {
     room.on("participantConnected", (participant) => {
       setParticipants([...participants, participant]);
+      console.log("Participant Connected");
     });
 
     room.on("participantDisconected", (participant) => {
@@ -94,6 +100,7 @@ export function useTwilioVideoRoom() {
         (x) => x.id != participant.id
       );
       setParticipants(leftParticipants);
+      console.log("Participant Disconnected");
     });
   }
 
@@ -101,7 +108,7 @@ export function useTwilioVideoRoom() {
     hasJoined,
     participants,
     room,
-    connectParticipantToRef,
+    connectParticipantToRef: connectParticipantToTracks,
     onVideoOptionChange,
     onAudioOptionChange,
     connectToLocalTracks,
@@ -109,7 +116,7 @@ export function useTwilioVideoRoom() {
       mics,
       cams,
     },
-    joinTwilioRoom
+    joinTwilioRoom,
   };
 }
 

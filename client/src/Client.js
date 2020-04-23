@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef} from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 
 import { AuthContext } from "./App";
@@ -9,12 +9,19 @@ function Client() {
   const { id } = useParams();
   const auth = useContext(AuthContext);
   const [shouldAskforPassword, setShouldAskforPassword] = useState(true);
-  const { devices, joinTwilioRoom, connectToLocalTracks, hasJoined, participants} = useTwilioVideoRoom();
-  const {POST} = useFetch();
+  const {
+    devices,
+    joinTwilioRoom,
+    connectToLocalTracks,
+    hasJoined,
+    participants,
+    connectParticipantToRef,
+  } = useTwilioVideoRoom();
+  const { POST } = useFetch();
   const local = useRef();
 
   useEffect(() => {
-    console.log(auth)
+    console.log(auth);
     if (!auth.currentUser.roomToken) {
       setShouldAskforPassword(true);
     } else {
@@ -25,13 +32,15 @@ function Client() {
     console.log(devices);
   }, [auth.currentUser]);
 
-  useEffect(() => {
-    connectToLocalMedia()
-  }, [hasJoined])
+  console.log(participants);
 
   useEffect(() => {
-    console.log(participants)
-  }, [participants])
+    connectToLocalMedia();
+  }, [hasJoined]);
+
+  useEffect(() => {
+    console.log(participants);
+  }, [participants]);
 
   async function connectToLocalMedia() {
     if (hasJoined) {
@@ -39,13 +48,12 @@ function Client() {
     }
   }
 
-
   async function joinRoom() {
     const r = await POST(`room/join`, {
       roomName: id,
       password: "1234",
     });
-    auth.setCurrentUser({...auth.currentUser, roomToken: r.body.token})
+    auth.setCurrentUser({ ...auth.currentUser, roomToken: r.body.token });
   }
 
   return (
@@ -61,8 +69,22 @@ function Client() {
         </div>
       )}
       <div ref={local}></div>
+      {Array.from(participants.values()).map((p) => (
+        <ParticipantScreen
+          key={p.sid}
+          connect={connectParticipantToRef}
+          participant={p}
+        />
+      ))}
     </div>
   );
 }
 
+function ParticipantScreen({ connect, participant }) {
+  const ref = useRef();
+  useEffect(() => {
+    connect(ref, participant);
+  }, []);
+  return <div ref={ref}></div>;
+}
 export default Client;
