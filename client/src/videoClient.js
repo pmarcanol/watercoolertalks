@@ -18,9 +18,7 @@ export function useTwilioVideoRoom() {
       handleTwilioEvents(room);
     }
     return () => {
-      if (room) {
-        room.disconnect();
-      }
+      disconnectFromRoom()
     };
   }, [room]);
 
@@ -36,10 +34,19 @@ export function useTwilioVideoRoom() {
     init();
     return () => {
       if (room) {
-        room.disconnect();
+        disconnectFromRoom()
       }
     };
   }, []);
+
+  function disconnectFromRoom() {
+    if (room) {
+      room.localParticipant.tracks.forEach(publication => {
+        publication.track.detach();
+      });
+      room.disconnect()
+    }
+  }
 
   async function joinTwilioRoom(token) {
     try {
@@ -94,7 +101,7 @@ export function useTwilioVideoRoom() {
       console.log("Participant Connected");
     });
 
-    room.on("participantDisconected", (participant) => {
+    room.on("participantDisconnected", (participant) => {
       console.log("Participant Disconnected", participant);
       const leftParticipants = participants.filter(
         (x) => x.id != participant.id
